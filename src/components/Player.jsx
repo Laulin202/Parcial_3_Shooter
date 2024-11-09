@@ -47,14 +47,19 @@ export const Player = () => {
 
         //JUMPING TEST
         const world = rapier.world;
-        const ray = world.castRay(new RAPIER.Ray(playerRef.current.translation(), { x: 0, y: -1, z: 0 }));
-        let grounded = ray && ray.collider && Math.abs(ray.toi) <= 1;
+        const playerPosition={
+            x:playerRef.current.translation().x,
+            y:playerRef.current.translation().y - 0.5,
+            z:playerRef.current.translation().z
+        }
+        const ray = world.castRay(new RAPIER.Ray(playerPosition, { x: 0, y: -1, z: 0 }));
+        const grounded = ray && ray.collider && ray.timeOfImpact <= 1;
 
+        console.log("ray.timeIfImpact: ", ray.timeOfImpact)
         console.log("Grounded:", grounded);
-        //Grounded is always false (forsomereason)
         console.log("Jump:", jump);
                                                     
-        if (jump) doJump();
+        if (jump && grounded) doJump();
 
         //MOVING CAMERA
 
