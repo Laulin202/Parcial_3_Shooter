@@ -4,6 +4,7 @@ import { WeaponModel } from "./WeaponModel.jsx";
 import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { usePointerLockControlsStore } from "../App.jsx";
+import { create } from "zustand";
 
 
 const recoilAmount = 0.03;
@@ -15,7 +16,16 @@ const recoilGroup = new TWEEN.Group();
 const SHOOT_BUTTON = parseInt(import.meta.env.VITE_SHOOT_BUTTON);
 const AIM_BUTTON = parseInt(import.meta.env.VITE_AIM_BUTTON);
 
+// Estados de aim
+export const useAimStore = create((set)=>({
+    isAiming: null,
+    setAiming: (value) => set(() => ({isAiming: value}))
+}));
+
 export const Weapon = (props) => {
+
+    // Varibale para cambiar el estado del aim
+    const setAiming = useAimStore((state)=>state.setAiming)
 
     const [recoilAnimation, setRecoilAnimation] = useState(null);
     const [recoilBackAnimation, setRecoilBackAnimation] = useState(null);
@@ -24,7 +34,6 @@ export const Weapon = (props) => {
     document.addEventListener('mousedown', (ev) => {
         ev.preventDefault();
         mouseButtonHandler(ev.button,true);
-        console.log("click")
     });
     document.addEventListener('mouseup', (ev) => {
         ev.preventDefault();
@@ -36,9 +45,10 @@ export const Weapon = (props) => {
 
         switch (button){
             case SHOOT_BUTTON:
-                setIsShooting(state)
+                setIsShooting(state);
                 break;
             case AIM_BUTTON:
+                setAiming(state);
                 break;
         }
     }

@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import * as RAPIER from "@dimforge/rapier3d-compat"
 import * as TWEEN from "@tweenjs/tween.js";
-import { CapsuleCollider, RigidBody,  useRapier } from "@react-three/rapier";
+import { CapsuleCollider, RigidBody, useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState } from "react";
 import { usePersonControls } from "../hooks.js";
 import { useFrame } from "@react-three/fiber";
-import {Weapon} from "./Weapon.jsx";
+import { useAimStore, Weapon } from "./Weapon.jsx";
 
 
 
@@ -24,12 +24,19 @@ export const Player = () => {
     const { forward, backward, left, right, jump } = usePersonControls();
     const objectInHandRef = useRef();
 
+    // Aiming
+    const isAiming = useAimStore((state) => state.isAiming);
+
 
     //Weapon animation 
     const swayingObjectRef = useRef();
     const [swayingAnimation, setSwayingAnimation] = useState(null);
     const [swayingBackAnimation, setSwayingBackAnimation] = useState(null);
     const [isSwayingAnimationFinished, setIsSwayingAnimationFinished] = useState(true);
+
+    // Aiming animation
+    const [aimingAnimation, setAimingAnimation] = useState(null);
+    const [aimingBackAnimation, setAimingBackAnimation] = useState(null);
 
 
 
@@ -49,21 +56,21 @@ export const Player = () => {
 
         //JUMPING TEST
         const world = rapier.world;
-        const playerPosition={
-            x:playerRef.current.translation().x,
-            y:playerRef.current.translation().y - 0.5,
-            z:playerRef.current.translation().z
+        const playerPosition = {
+            x: playerRef.current.translation().x,
+            y: playerRef.current.translation().y - 0.5,
+            z: playerRef.current.translation().z
         }
         const ray = world.castRay(new RAPIER.Ray(playerPosition, { x: 0, y: -1, z: 0 }));
         const grounded = ray && ray.collider && ray.timeOfImpact <= 1;
 
-                                                    
+
         if (jump && grounded) doJump();
 
         //MOVING CAMERA
 
-        const {x,y,z} = playerRef.current.translation();
-        state.camera.position.set(x,y,z);
+        const { x, y, z } = playerRef.current.translation();
+        state.camera.position.set(x, y, z);
 
         //MOVING OBJECT IN HAND FOR THE PLAYER
 
@@ -85,8 +92,8 @@ export const Player = () => {
     });
 
     //FUNCION SALTAR
-    const doJump = () =>{
-        playerRef.current.setLinvel({x:0, y:8, z:0});
+    const doJump = () => {
+        playerRef.current.setLinvel({ x: 0, y: 8, z: 0 });
     }
 
     //FUNCION ANIMACION ARMA
@@ -102,7 +109,7 @@ export const Player = () => {
             .onUpdate(() => {
                 swayingObjectRef.current.position.copy(currentPosition);
             });
-        const twSwayingBackAnimation = new TWEEN.Tween(currentPosition,swayingGroup)
+        const twSwayingBackAnimation = new TWEEN.Tween(currentPosition, swayingGroup)
             .to(initialPosition, animationDuration)
             .easing(easing)
             .onUpdate(() => {
@@ -114,9 +121,47 @@ export const Player = () => {
         twSwayingAnimation.chain(twSwayingBackAnimation);
         setSwayingAnimation(twSwayingAnimation);
     }
+
+    const initAimingAnimation = () => {
+        const currentPosition = swayingObjectRef.current.position;
+        const finalPosition = new THREE.Vector3(-0.3, -0.01, 0)
+        const returnPosition = new THREE.Vector3(0, 0, 0)
+        const easing = TWEEN.Easing.Quadratic.Out;
+
+        const twAimingAnimation = new TWEEN.Tween(currentPosition, swayingGroup)
+            .to(finalPosition, 200)
+            .easing(easing);
+
+        const twAimignBackAnimation = new TWEEN.Tween(finalPosition.clone() ,swayingGroup)
+            .to(returnPosition, 200)
+            .easing(easing)
+            .onUpdate((position) => {
+                swayingObjectRef.current.position.copy(position)
+            })
+
+        setAimingAnimation(twAimingAnimation);
+        setAimingBackAnimation(twAimignBackAnimation);
+    }
     useEffect(() => {
         initSwayingObjectAnimation();
     }, []);
+    useEffect(() => {
+        initAimingAnimation();
+    }, [swayingObjectRef]);
+    useEffect(() => {
+        if (isAiming) {
+            swayingAnimation.stop();
+            aimingAnimation.start();
+        } else if (isAiming === false) {
+            aimingBackAnimation?.start()
+                .onComplete(() => {
+                    swayingAnimation.stop();
+                    setIsSwayingAnimationFinished(true);
+                });
+        }
+
+        console.log(isAiming)
+    }, [isAiming, aimingAnimation, aimingBackAnimation])
 
     return (
         <>
@@ -128,7 +173,7 @@ export const Player = () => {
             </RigidBody>
             <group ref={objectInHandRef}>
                 <group ref={swayingObjectRef}>
-                    <Weapon position={[0.3, -0.1 ,0.3]} scale={0.3} />
+                    <Weapon position={[0.3, -0.1, 0.3]} scale={0.3} />
                 </group>
             </group>
         </>
