@@ -16,13 +16,6 @@ const shadowOffset = 50;
 
 function App() {
 
-  useFrame(() => {
-    TWEEN.update();
-    console.log("TWEEN.update() is being called");
-  });
-
-
-
   return (
     <>
       <PointerLockControls />

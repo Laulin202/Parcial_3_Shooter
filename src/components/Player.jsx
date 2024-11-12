@@ -16,6 +16,8 @@ const sideVector = new THREE.Vector3();
 
 const rotation = new THREE.Vector3();
 
+const swayingGroup = new TWEEN.Group();
+
 export const Player = () => {
 
     const playerRef = useRef();
@@ -55,9 +57,9 @@ export const Player = () => {
         const ray = world.castRay(new RAPIER.Ray(playerPosition, { x: 0, y: -1, z: 0 }));
         const grounded = ray && ray.collider && ray.timeOfImpact <= 1;
 
-        console.log("ray.timeIfImpact: ", ray.timeOfImpact)
-        console.log("Grounded:", grounded);
-        console.log("Jump:", jump);
+        //console.log("ray.timeIfImpact: ", ray.timeOfImpact)
+        //console.log("Grounded:", grounded);
+        //console.log("Jump:", jump);
                                                     
         if (jump && grounded) doJump();
 
@@ -80,8 +82,8 @@ export const Player = () => {
             setIsSwayingAnimationFinished(false);
             swayingAnimation.start();
         }
-        
 
+        swayingGroup.update()
 
     });
 
@@ -97,14 +99,13 @@ export const Player = () => {
         const newPosition = new THREE.Vector3(-0.05, 0, 0);
         const animationDuration = 300;
         const easing = TWEEN.Easing.Quadratic.Out;
-        const twSwayingAnimation = new TWEEN.Tween(currentPosition)
+        const twSwayingAnimation = new TWEEN.Tween(currentPosition, swayingGroup)
             .to(newPosition, animationDuration)
             .easing(easing)
             .onUpdate(() => {
-                console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                 swayingObjectRef.current.position.copy(currentPosition);
             });
-        const twSwayingBackAnimation = new TWEEN.Tween(currentPosition)
+        const twSwayingBackAnimation = new TWEEN.Tween(currentPosition,swayingGroup)
             .to(initialPosition, animationDuration)
             .easing(easing)
             .onUpdate(() => {
@@ -115,7 +116,6 @@ export const Player = () => {
             });
         twSwayingAnimation.chain(twSwayingBackAnimation);
         setSwayingAnimation(twSwayingAnimation);
-        setSwayingBackAnimation(twSwayingBackAnimation);
     }
     useEffect(() => {
         initSwayingObjectAnimation();
