@@ -25,7 +25,7 @@ export const Player = () => {
     const objectInHandRef = useRef();
 
 
-    //Weapon animation (Doesn't work)
+    //Weapon animation 
     const swayingObjectRef = useRef();
     const [swayingAnimation, setSwayingAnimation] = useState(null);
     const [swayingBackAnimation, setSwayingBackAnimation] = useState(null);
@@ -57,9 +57,6 @@ export const Player = () => {
         const ray = world.castRay(new RAPIER.Ray(playerPosition, { x: 0, y: -1, z: 0 }));
         const grounded = ray && ray.collider && ray.timeOfImpact <= 1;
 
-        //console.log("ray.timeIfImpact: ", ray.timeOfImpact)
-        //console.log("Grounded:", grounded);
-        //console.log("Jump:", jump);
                                                     
         if (jump && grounded) doJump();
 
@@ -96,7 +93,7 @@ export const Player = () => {
     const initSwayingObjectAnimation = () => {
         const currentPosition = new THREE.Vector3(0, 0, 0);
         const initialPosition = new THREE.Vector3(0, 0, 0);
-        const newPosition = new THREE.Vector3(-0.05, 0, 0);
+        const newPosition = new THREE.Vector3(-0.02, 0.01, 0);
         const animationDuration = 300;
         const easing = TWEEN.Easing.Quadratic.Out;
         const twSwayingAnimation = new TWEEN.Tween(currentPosition, swayingGroup)
