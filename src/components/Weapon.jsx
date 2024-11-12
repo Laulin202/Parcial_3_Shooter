@@ -3,6 +3,7 @@ import * as TWEEN from "@tweenjs/tween.js";
 import { WeaponModel } from "./WeaponModel.jsx";
 import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
+import { usePointerLockControlsStore } from "../App.jsx";
 
 
 const recoilAmount = 0.03;
@@ -10,18 +11,37 @@ const recoilDuration = 100;
 const easing = TWEEN.Easing.Quadratic.Out;
 const recoilGroup = new TWEEN.Group();
 
+// Controles al entrar al camvas
+const SHOOT_BUTTON = parseInt(import.meta.env.VITE_SHOOT_BUTTON);
+const AIM_BUTTON = parseInt(import.meta.env.VITE_AIM_BUTTON);
+
 export const Weapon = (props) => {
 
     const [recoilAnimation, setRecoilAnimation] = useState(null);
     const [recoilBackAnimation, setRecoilBackAnimation] = useState(null);
     const [isShooting, setIsShooting] = useState(false);
     const weaponRef = useRef();
-    document.addEventListener('mousedown', () => {
-        setIsShooting(true);
+    document.addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
+        mouseButtonHandler(ev.button,true);
+        console.log("click")
     });
-    document.addEventListener('mouseup', () => {
-        setIsShooting(false);
+    document.addEventListener('mouseup', (ev) => {
+        ev.preventDefault();
+        mouseButtonHandler(ev.button,false);
     });
+
+    const mouseButtonHandler = (button, state) => {
+        if (!usePointerLockControlsStore.getState().isLock) return;
+
+        switch (button){
+            case SHOOT_BUTTON:
+                setIsShooting(state)
+                break;
+            case AIM_BUTTON:
+                break;
+        }
+    }
     const generateRecoilOffset = () => {
         return new THREE.Vector3(
             Math.random() * recoilAmount,
