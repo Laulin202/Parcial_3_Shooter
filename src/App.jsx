@@ -7,6 +7,7 @@ import { Ground } from "./components/Ground.jsx";
 import { Physics, RigidBody } from '@react-three/rapier';
 import { Player } from "./components/Player.jsx";
 import { Cubes } from './components/Cubes.jsx';
+import {create} from "zustand"
 
 import { useFrame } from "@react-three/fiber";
 
@@ -14,11 +15,23 @@ import './App.css'
 
 const shadowOffset = 50;
 
+export const usePointerLockControlsStore = create(()=>({
+  isLock: false,
+}))
+
 function App() {
+
+  const PointerLockControlsLockHandler = () => {
+    usePointerLockControlsStore.setState({isLock: true});
+  }
+
+  const PointerLockControlsUnlockHandler = () =>{
+    usePointerLockControlsStore.setState({isLock: false});
+  }
 
   return (
     <>
-      <PointerLockControls />
+      <PointerLockControls onLock={PointerLockControlsLockHandler} onUnlock={PointerLockControlsUnlockHandler} />
       <Sky sunPosition={[100, 20, 100]} />
       <ambientLight intensity={1.5} />
       <directionalLight
