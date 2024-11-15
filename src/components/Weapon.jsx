@@ -2,10 +2,12 @@ import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 import { WeaponModel } from "./WeaponModel.jsx";
 import { useEffect, useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useLoader } from "@react-three/fiber";
 import { usePointerLockControlsStore } from "../App.jsx";
 import { create } from "zustand";
 
+import FlashShoot from "../assets/images/flash2.png"
+import SingleShootAK47 from "../assets/sounds/ak7shot.mp3"
 
 const recoilAmount = 0.03;
 const recoilDuration = 100;
@@ -16,34 +18,43 @@ const recoilGroup = new TWEEN.Group();
 const SHOOT_BUTTON = parseInt(import.meta.env.VITE_SHOOT_BUTTON);
 const AIM_BUTTON = parseInt(import.meta.env.VITE_AIM_BUTTON);
 
+
 // Estados de aim
-export const useAimStore = create((set)=>({
+export const useAimStore = create((set) => ({
     isAiming: null,
-    setAiming: (value) => set(() => ({isAiming: value}))
+    setAiming: (value) => set(() => ({ isAiming: value }))
 }));
 
 export const Weapon = (props) => {
 
     // Varibale para cambiar el estado del aim
-    const setAiming = useAimStore((state)=>state.setAiming)
+    const setAiming = useAimStore((state) => state.setAiming)
 
     const [recoilAnimation, setRecoilAnimation] = useState(null);
     const [recoilBackAnimation, setRecoilBackAnimation] = useState(null);
     const [isShooting, setIsShooting] = useState(false);
     const weaponRef = useRef();
+
+    //Shoot sound
+    const audio = new Audio(SingleShootAK47);
+    //Flash Image
+    const texture = useLoader(THREE.TextureLoader, FlashShoot);
+    const [flashAnimation, setFlashAnimation] = useState(null);
+
+
     document.addEventListener('mousedown', (ev) => {
         ev.preventDefault();
-        mouseButtonHandler(ev.button,true);
+        mouseButtonHandler(ev.button, true);
     });
     document.addEventListener('mouseup', (ev) => {
         ev.preventDefault();
-        mouseButtonHandler(ev.button,false);
+        mouseButtonHandler(ev.button, false);
     });
 
     const mouseButtonHandler = (button, state) => {
         if (!usePointerLockControlsStore.getState().isLock) return;
 
-        switch (button){
+        switch (button) {
             case SHOOT_BUTTON:
                 setIsShooting(state);
                 break;
@@ -85,13 +96,20 @@ export const Weapon = (props) => {
     }
     const startShooting = () => {
         recoilAnimation.start();
+        //prueba
+        flashAnimation.start();
+        audio.play();
     }
     useEffect(() => {
         initRecoilAnimation();
+
+        initFlashAnimation();
+
         if (isShooting) {
             startShooting();
         }
     }, [isShooting]);
+
     useFrame(() => {
         recoilGroup.update();
         if (isShooting) {
@@ -99,10 +117,31 @@ export const Weapon = (props) => {
         }
     });
 
+    //SHOOT FLASH
+    const [flashOpacity, setFlashOpacity] = useState(0);
+
+    const initFlashAnimation = () => {
+        const currentFlashParams = { opacity: 0 };
+        const twFlashAnimation = new TWEEN.Tween(currentFlashParams, recoilGroup)
+            .to({ opacity: 1 }, recoilDuration)
+            .easing(easing)
+            .onUpdate(() => {
+                setFlashOpacity(() => currentFlashParams.opacity);
+            })
+            .onComplete(() => {
+                setFlashOpacity(() => 0);
+            });
+        setFlashAnimation(twFlashAnimation);
+    }
+
 
     return (
         <group {...props}>
             <group ref={weaponRef}>
+                <mesh position={[0, 0.05, -2]} scale={[1, 1, 0]}>
+                    <planeGeometry attach="geometry" args={[1, 1]} />
+                    <meshBasicMaterial attach="material" map={texture} transparent={true} opacity={flashOpacity} />
+                </mesh>
                 <WeaponModel />
             </group>
         </group>
